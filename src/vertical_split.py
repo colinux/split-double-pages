@@ -16,7 +16,7 @@ class VerticalSplit():
         dimLeft = (0, 0, x - 1, o_height)
         imgLeft = self.original.crop(dimLeft)
 
-        dimRight = (x, 0, o_width, o_height)
+        dimRight = (x - 1, 0, o_width, o_height)
         imgRight = self.original.crop(dimRight)
 
         file_paths = self.pages_paths()

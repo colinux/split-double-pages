@@ -16,6 +16,7 @@ class BindingLocator():
         means = df.mean()
 
         amplified = self.amplify(means)
+        amplified.iloc[self.outliers(df).index] = np.nan
 
         downscaled_binding = self.locate_binding(amplified)
 
@@ -55,6 +56,10 @@ class BindingLocator():
         # 0-10 values rounded. 10 = maximum of white around center of image.
         return (means * amplifier * 10).round()
 
+    def outliers(self, df):
+        std = df.std()
+        q = std.quantile(0.5)
+        return std[std > q]
 
     def apply_func_factory(self, serie):
         center = len(serie)/2
@@ -68,7 +73,7 @@ class BindingLocator():
 
     def locate_binding(self, amplified):
         # group series by its value
-        grouped = amplified.reset_index().groupby(amplified, as_index=False)
+        grouped = pd.DataFrame([amplified]).T.groupby(amplified, as_index=False)
 
         # luminosity distinct sorted values (10 at max = whitest)
         lum_val = grouped[0].last().round().values.flatten()
@@ -76,12 +81,11 @@ class BindingLocator():
         whitest = lum_val[-1]
 
         # whitests columns (maximum of luminosity)
-        white_cols = grouped.get_group(whitest)['index']
-
+        white_cols = pd.Series(grouped.get_group(whitest).index)
         # we want enough columns to increase sensibility
         # so we add the second whitest columns (unless it's too large)
         if len(white_cols) < 0.02 * self.DOWNSCALED_WIDTH:
-            next_group = grouped.get_group(lum_val[-2])['index']
+            next_group = pd.Series(grouped.get_group(lum_val[-2]).index)
             if len(next_group) < 0.1 * self.DOWNSCALED_WIDTH:
                 white_cols = white_cols.append(next_group)
 
@@ -89,7 +93,7 @@ class BindingLocator():
         # inside the whitest columns range (with an added margin)
         first_idx, last_idx = white_cols.min(), white_cols.max()
         margin = max(1, round(0.01 * self.DOWNSCALED_WIDTH))
-        white_band = amplified[first_idx-margin:last_idx+margin]
+        white_band = amplified.loc[first_idx-margin:last_idx+margin]
 
         # local darkest inside white band
         band_min = white_band.min()
