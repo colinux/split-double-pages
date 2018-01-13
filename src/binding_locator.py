@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
+from src.utils import debug
+
 class BindingLocator():
     # not to low, as we need the thin black binding at the middle
     DOWNSCALED_WIDTH = 400
@@ -30,7 +32,7 @@ class BindingLocator():
         o_width, o_height = self.image.size
         height = round((self.DOWNSCALED_WIDTH/o_width) * o_height)
 
-        ds_img = self.image.resize((self.DOWNSCALED_WIDTH, height), resample=Image.BICUBIC)
+        ds_img = self.image.resize((self.DOWNSCALED_WIDTH, height), resample=Image.BILINEAR)
         return ds_img
 
 
@@ -43,7 +45,7 @@ class BindingLocator():
 
         # more contrast, reduce to a scale between O (black) and 1 (white)
         return df.applymap(
-            lambda x: int(np.sqrt(x) if x <= 127 else x**2)
+            lambda x: int(np.sqrt(x) if x < 127 else x**2)
         ) / 255**2
 
 
@@ -58,7 +60,8 @@ class BindingLocator():
 
     def outliers(self, df):
         std = df.std()
-        q = std.quantile(0.5)
+        q = std.quantile(0.66)
+        debug("Outliers are std > %f" % q)
         return std[std > q]
 
     def apply_func_factory(self, serie):
@@ -84,10 +87,10 @@ class BindingLocator():
         white_cols = pd.Series(grouped.get_group(whitest).index)
         # we want enough columns to increase sensibility
         # so we add the second whitest columns (unless it's too large)
-        if len(white_cols) < 0.02 * self.DOWNSCALED_WIDTH:
+        if len(white_cols) < 0.01 * self.DOWNSCALED_WIDTH:
             next_group = pd.Series(grouped.get_group(lum_val[-2]).index)
-            if len(next_group) < 0.1 * self.DOWNSCALED_WIDTH:
-                white_cols = white_cols.append(next_group)
+            if len(next_group) < 0.05 * self.DOWNSCALED_WIDTH:
+                white_cols = white_cols.append(next_group).sort_values()
 
         # first : try to detect a black binding
         # inside the whitest columns range (with an added margin)
@@ -95,14 +98,22 @@ class BindingLocator():
         margin = max(1, round(0.01 * self.DOWNSCALED_WIDTH))
         white_band = amplified.loc[first_idx-margin:last_idx+margin]
 
+
         # local darkest inside white band
         band_min = white_band.min()
+        debug("Darkest inside white band: %s" % band_min)
 
         if band_min <= whitest - 2:
             # dark band inside white columns: this is our binding
             # returns the median of these cols
             darkest_cols = white_band[white_band == band_min].reset_index()['index']
-            return darkest_cols.median()
+
+            binding_point = darkest_cols.median()
+
+            debug("binding_point=%f (median in dark range around middle)" % binding_point)
         else:
-            # median of the whitest columns
-            return white_cols.median()
+            # mean of the whitest columns
+            binding_point = white_cols.median()
+            debug("binding_point=%f (median of white maximum)")
+
+        return binding_point
