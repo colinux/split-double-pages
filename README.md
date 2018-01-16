@@ -89,3 +89,7 @@ For instance:
 ln -s /usr/local/lib/python3.5/site-packages/PythonMagick \
       ENV/lib/python3.5/site-packages
 ```
+
+## License
+
+Please see [LICENSE](https://github.com/colinux/split-double-pages/blob/master/LICENSE) for licensing details.
