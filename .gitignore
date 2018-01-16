@@ -1,7 +1,13 @@
 .DS_Store
 ENV/
 **/__pycache__/
+*.pyc
+**/*.pyc
+
 notebooks/.ipynb_checkpoints
 
-input/*.jpg
-output/*.jpg
+
+input/**/*
+input/*
+output/**/*
+output/*
