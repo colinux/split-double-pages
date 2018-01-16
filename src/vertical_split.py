@@ -36,14 +36,19 @@ class VerticalSplit():
 
     def pages_names(self):
         match = self.regex_original_name.search(self.filename)
+        if match:
+            # page names as numbers
+            # left = int(match.group('left'))
+            # right = int(match.group('right') or left + 1)
 
-        # page names as numbers
-        # left = int(match.group('left'))
-        # right = int(match.group('right') or left + 1)
+            # page names as suffixed from original
+            left = match.group('left') + "-a"
+            right = (match.group('right') or match.group('left')) + "-b"
+        else:
+            basename = os.path.splitext(os.path.basename(self.filename))[0]
+            left  = "%s-a" % basename
+            right = "%s-b" % basename
 
-        # page names as suffixed from original
-        left = match.group('left') + "-a"
-        right = match.group('right') or (match.group('left') + "-b")
 
         return {
             "left": left,
