@@ -19,7 +19,7 @@ class Environment():
         try:
             opts, args = getopt.getopt(argv[1:], "v", ["debug", "verbose"])
         except getopt.GetoptError:
-            print('main.py [-v | --verbose] [--debug] [ imgpath1, imgpath2, …]')
+            print('main.py [-v | --verbose] [--debug] [ imgpath1, imgpath2, ...]')
             sys.exit(2)
 
         if len(args) > 0:
