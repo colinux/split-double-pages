@@ -7,6 +7,7 @@ from src.utils import log, open_in_landscape
 from src.binding_locator import BindingLocator
 from src.vertical_split import VerticalSplit
 
+
 if len(env.files) == 0:
     print("Directory '%s' must contains at least 1 *.jpg file to handle." % cst.INPUT_DIR)
 
@@ -26,6 +27,6 @@ for filename in env.files:
         for position, path in new_paths.items():
             log("    - %s=%s" % (position, path.replace(cst.ROOT_PATH + "/", "")))
 
-    except:
+    except Exception:
         traceback.print_exc()
     # exit()

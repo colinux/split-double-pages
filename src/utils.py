@@ -17,3 +17,17 @@ def log(msg):
 def debug(msg):
     if env.debug:
         print("DEBUG: %s" % msg)
+
+def rescale(serie):
+    serie -= serie.min()
+    return serie / serie.max()
+
+def middle(df, replacement):
+    df2 = df.copy()
+
+    third = int(len(df.columns) / 3)
+
+    df2.loc[:, :third] = replacement
+    df2.loc[:, 2*third:] = replacement
+
+    return df2
